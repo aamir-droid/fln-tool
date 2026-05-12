@@ -140,6 +140,8 @@ interface LessonResult {
   imagePrompts: string[];
   storyAudioBase64?: string[];
   storyImagesBase64?: string[];
+  // Per-slide interactive widget specs (tap-count, drag-bucket, tap-find)
+  slideInteractions?: any[];
   // NIPUN anchoring — surfaced as a badge on the lesson screens
   loCode?: string;
   loSubSkill?: string;
@@ -840,9 +842,11 @@ export default function App() {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 flex-1 items-center max-w-6xl mx-auto w-full">
                     <div class="flex flex-col justify-center">
                         <div class="story-text" id="story-content">${result.storySlides[0]}</div>
+                        <div id="activity-instruction" style="margin-top:18px;font-weight:800;color:#2E3192;font-size:1.5rem;line-height:1.3"></div>
                     </div>
                     <div class="flex flex-col justify-center h-full">
-                        <div class="aspect-video relative overflow-hidden rounded-[32px] border-4 border-[#E8E0D0] shadow-sm">
+                        <div id="slide-activity" class="aspect-video relative rounded-[32px] border-4 border-[#E8E0D0] shadow-sm bg-white" style="display:none;overflow:hidden"></div>
+                        <div id="slide-image-wrap" class="aspect-video relative overflow-hidden rounded-[32px] border-4 border-[#E8E0D0] shadow-sm">
                             <img id="slide-image" src="${storyImageUrls[0] || ''}" class="w-full h-full object-contain bg-white" />
                         </div>
                     </div>
@@ -918,6 +922,7 @@ export default function App() {
         let introAudioPlayed = false;
         
         const storySlides = ${JSON.stringify(result.storySlides)};
+        const slideInteractions = ${JSON.stringify(result.slideInteractions || [])};
         const storyAudioUrls = ${JSON.stringify(storyUrls)};
         const storyImageUrls = ${JSON.stringify(storyImageUrls)};
         const quizAudioUrls = ${JSON.stringify(quizUrls)};
@@ -1142,6 +1147,226 @@ export default function App() {
             setInterval(update, 250);
         })();
 
+        // ===== Inject interactive activity widgets (tap-count · drag-bucket · tap-find) =====
+        (function injectActivities(){
+            var st = document.createElement('style');
+            st.textContent = ''
+              + '@keyframes flnPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}'
+              + '@keyframes flnSparkle{0%{transform:scale(0);opacity:1}50%{transform:scale(1.3);opacity:1}100%{transform:scale(.5);opacity:0;top:-20%}}'
+              + '@keyframes flnWiggle{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}'
+              + '@keyframes flnBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}'
+              + '.fln-tap-item{transition:transform .2s,opacity .2s;animation:flnBob 2s ease-in-out infinite}'
+              + '.fln-tap-item:hover{transform:scale(1.15)!important;animation:none}'
+              + '.fln-card{transition:all .15s ease}'
+              + '.fln-card:hover{border-color:#FF9933!important;transform:translateY(-3px)}'
+              + '.fln-drag-item{transition:transform .2s,box-shadow .2s}'
+              + '.fln-drag-item:hover{transform:scale(1.1)}'
+              + '#slide-activity{display:flex;align-items:center;justify-content:center}';
+            document.head.appendChild(st);
+
+            function pill(target){
+                var p=document.createElement('div');
+                p.style.cssText='position:absolute;top:12px;right:12px;background:#FFF3E0;border:2px solid #FF9933;color:#1c1f2e;font-weight:900;font-size:1.1rem;padding:5px 14px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.08);z-index:10';
+                p.textContent='0 / '+target;
+                p.upd=function(n){p.textContent=n+' / '+target};
+                return p;
+            }
+
+            function celebrate(host, msg){
+                var ov=document.createElement('div');
+                ov.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(16,185,129,.15);backdrop-filter:blur(2px);font-size:1.5rem;font-weight:900;color:#065f46;text-align:center;padding:24px;z-index:50;animation:flnPop .4s ease-out forwards';
+                ov.textContent='🎉 '+(msg||'Great!');
+                host.appendChild(ov);
+                for(var i=0;i<10;i++){
+                    var s=document.createElement('div');
+                    s.textContent=['⭐','✨','🌟','💫'][i%4];
+                    s.style.cssText='position:absolute;font-size:2rem;pointer-events:none;left:'+(Math.random()*80+10)+'%;top:'+(Math.random()*80+10)+'%;animation:flnSparkle 1s ease-out forwards;z-index:51';
+                    host.appendChild(s);
+                }
+                // Speak success line if we have audio infra
+                if(typeof generateNarration==='undefined'){
+                    // Try the page's playAudio with current title audio as a fallback — no-op if not available
+                }
+            }
+
+            function renderTapCount(host, spec){
+                host.innerHTML='';
+                var p=pill(spec.targetCount);
+                host.appendChild(p);
+                var grid=document.createElement('div');
+                grid.style.cssText='display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;width:100%;height:100%;padding:48px 24px 24px;box-sizing:border-box';
+                var tapped=0;
+                var n=Math.max(1,Math.min(10,spec.targetCount||1));
+                for(var i=0;i<n;i++){
+                    (function(){
+                        var b=document.createElement('button');
+                        b.className='fln-tap-item';
+                        b.textContent=spec.emoji||'🟠';
+                        b.style.cssText='font-size:3.8rem;background:none;border:none;cursor:pointer;padding:6px;line-height:1;animation-delay:'+(i*0.15)+'s';
+                        b.setAttribute('aria-label','Tap to count');
+                        b.onclick=function(){
+                            if(b.dataset.t==='1')return;
+                            b.dataset.t='1';
+                            b.style.opacity='.35';
+                            b.style.transform='scale(1.4)';
+                            b.style.animation='none';
+                            setTimeout(function(){b.style.transform='scale(1)'},220);
+                            tapped++;
+                            p.upd(tapped);
+                            if(tapped===n) setTimeout(function(){celebrate(host,spec.successSay)},320);
+                        };
+                        grid.appendChild(b);
+                    })();
+                }
+                host.appendChild(grid);
+            }
+
+            function renderDragBucket(host, spec){
+                host.innerHTML='';
+                var p=pill(spec.targetCount);
+                host.appendChild(p);
+                var items=document.createElement('div');
+                items.style.cssText='position:absolute;top:54px;left:0;right:0;height:42%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;padding:8px;box-sizing:border-box';
+                host.appendChild(items);
+                var bkt=document.createElement('div');
+                bkt.style.cssText='position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:#FFF3E0;border:4px dashed #FF9933;border-radius:24px;padding:14px 24px;min-width:160px;min-height:96px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;font-size:3.5rem;line-height:1;transition:all .2s';
+                bkt.textContent=spec.bucketEmoji||'🧺';
+                var bktLabel=document.createElement('div');
+                bktLabel.style.cssText='position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font-weight:800;color:#2E3192;font-size:.85rem;text-align:center;white-space:nowrap';
+                bktLabel.textContent=spec.bucketLabel||'';
+                host.appendChild(bkt);
+                host.appendChild(bktLabel);
+                var dropped=0, contents=0;
+                var n=Math.max(1,Math.min(10,spec.targetCount||1));
+                function placeInBkt(){
+                    if(contents===0) bkt.textContent='';
+                    contents++;
+                    var s=document.createElement('span');
+                    s.textContent=spec.emoji||'🥭';
+                    s.style.cssText='font-size:2.2rem;animation:flnPop .35s ease-out';
+                    bkt.appendChild(s);
+                }
+                for(var i=0;i<n;i++){
+                    (function(){
+                        var el=document.createElement('div');
+                        el.className='fln-drag-item';
+                        el.textContent=spec.emoji||'🥭';
+                        el.style.cssText='font-size:3rem;cursor:grab;user-select:none;touch-action:none;line-height:1;padding:4px';
+                        el.dataset.d='0';
+                        var sx=0,sy=0,active=false;
+                        el.addEventListener('pointerdown',function(e){
+                            if(el.dataset.d==='1')return;
+                            el.setPointerCapture(e.pointerId);
+                            active=true;
+                            sx=e.clientX;sy=e.clientY;
+                            el.style.cursor='grabbing';
+                            el.style.zIndex='100';
+                        });
+                        el.addEventListener('pointermove',function(e){
+                            if(!active||el.dataset.d==='1')return;
+                            el.style.transform='translate('+(e.clientX-sx)+'px,'+(e.clientY-sy)+'px) scale(1.15)';
+                        });
+                        function endDrag(e){
+                            if(!active||el.dataset.d==='1')return;
+                            active=false;
+                            try{el.releasePointerCapture(e.pointerId)}catch(_){}
+                            var b=bkt.getBoundingClientRect();
+                            if(e.clientX>=b.left&&e.clientX<=b.right&&e.clientY>=b.top&&e.clientY<=b.bottom){
+                                el.dataset.d='1';
+                                el.style.display='none';
+                                dropped++;
+                                p.upd(dropped);
+                                placeInBkt();
+                                if(dropped===n) setTimeout(function(){celebrate(host,spec.successSay)},380);
+                            } else {
+                                el.style.transform='';
+                                el.style.cursor='grab';
+                                el.style.zIndex='';
+                            }
+                        }
+                        el.addEventListener('pointerup',endDrag);
+                        el.addEventListener('pointercancel',endDrag);
+                        items.appendChild(el);
+                    })();
+                }
+            }
+
+            function renderTapFind(host, spec){
+                host.innerHTML='';
+                var opts=spec.options||[];
+                var n=opts.length;
+                var cols=n<=2?2:n===3?3:2;
+                var grid=document.createElement('div');
+                grid.style.cssText='display:grid;grid-template-columns:repeat('+cols+',1fr);gap:14px;width:100%;height:100%;padding:18px;box-sizing:border-box';
+                opts.forEach(function(opt,idx){
+                    var c=document.createElement('button');
+                    c.className='fln-card';
+                    c.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#fff;border:3px solid #E8E0D0;border-radius:20px;padding:14px;cursor:pointer;font-family:inherit;min-height:100%';
+                    var em=document.createElement('div');
+                    em.textContent=opt.emoji||'';
+                    em.style.cssText='font-size:2.6rem;line-height:1.1;font-weight:900';
+                    var lb=document.createElement('div');
+                    lb.textContent=opt.label||'';
+                    lb.style.cssText='font-size:.9rem;font-weight:800;color:#1c1f2e;text-align:center';
+                    c.appendChild(em);c.appendChild(lb);
+                    c.onclick=function(){
+                        if(c.dataset.l)return;
+                        if(idx===spec.correctIndex){
+                            c.dataset.l='1';
+                            c.style.borderColor='#10b981';
+                            c.style.background='#ecfdf5';
+                            c.style.transform='scale(1.06)';
+                            setTimeout(function(){celebrate(host,spec.successSay)},250);
+                        } else {
+                            c.style.animation='flnWiggle .35s ease-in-out';
+                            setTimeout(function(){c.style.animation=''},370);
+                        }
+                    };
+                    grid.appendChild(c);
+                });
+                host.appendChild(grid);
+            }
+
+            window.flnRenderActivity=function(idx){
+                var spec=(typeof slideInteractions!=='undefined' && slideInteractions && slideInteractions[idx])||null;
+                var host=document.getElementById('slide-activity');
+                var imgWrap=document.getElementById('slide-image-wrap');
+                var instr=document.getElementById('activity-instruction');
+                if(!host)return;
+                if(!spec||!spec.kind){
+                    host.style.display='none';
+                    if(imgWrap)imgWrap.style.display='';
+                    if(instr)instr.textContent='';
+                    return;
+                }
+                if(imgWrap)imgWrap.style.display='none';
+                host.style.display='flex';
+                if(instr)instr.textContent=spec.instruction||'';
+                if(spec.kind==='tap-count')renderTapCount(host,spec);
+                else if(spec.kind==='drag-bucket')renderDragBucket(host,spec);
+                else if(spec.kind==='tap-find')renderTapFind(host,spec);
+                else { host.style.display='none'; if(imgWrap)imgWrap.style.display=''; }
+            };
+
+            // Poll for slide changes (lighter than monkey-patching updateSlide)
+            var lastIdx=-1, lastScreen='';
+            setInterval(function(){
+                if(typeof currentScreenId==='undefined')return;
+                if(currentScreenId!=='story'){
+                    if(lastScreen!==currentScreenId){
+                        lastScreen=currentScreenId;
+                        lastIdx=-1;
+                    }
+                    return;
+                }
+                if(typeof currentSlideIdx==='undefined')return;
+                if(currentSlideIdx===lastIdx&&lastScreen===currentScreenId)return;
+                lastIdx=currentSlideIdx;
+                lastScreen=currentScreenId;
+                window.flnRenderActivity(currentSlideIdx);
+            },180);
+        })();
+
         // Initialize the app accurately
         setTimeout(() => {
             showScreen('intro');
@@ -1281,9 +1506,13 @@ export default function App() {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 flex-1 items-center max-w-6xl mx-auto w-full">
                     <div class="flex flex-col justify-center">
                         <div class="story-text" id="story-content">${result.storySlides[0]}</div>
+                        <div id="activity-instruction" style="margin-top:18px;font-weight:800;color:#2E3192;font-size:1.5rem;line-height:1.3"></div>
                     </div>
                     <div class="flex flex-col justify-center h-full">
-                        <img id="slide-image" src="images/slide_image_0.png" class="w-full h-full max-h-[550px] rounded-[32px] border-4 border-[#E8E0D0] shadow-sm object-contain bg-white" />
+                        <div id="slide-activity" class="rounded-[32px] border-4 border-[#E8E0D0] shadow-sm bg-white" style="display:none;aspect-ratio:16/9;overflow:hidden;position:relative;width:100%"></div>
+                        <div id="slide-image-wrap" style="position:relative;width:100%">
+                            <img id="slide-image" src="images/slide_image_0.png" class="w-full h-full max-h-[550px] rounded-[32px] border-4 border-[#E8E0D0] shadow-sm object-contain bg-white" />
+                        </div>
                     </div>
                 </div>
                 
@@ -1357,6 +1586,7 @@ export default function App() {
         let introAudioPlayed = false;
         
         const storySlides = ${JSON.stringify(result.storySlides)};
+        const slideInteractions = ${JSON.stringify(result.slideInteractions || [])};
         const totalQuestions = ${result.quiz.length};
 
         function showScreen(id) {
@@ -1574,6 +1804,226 @@ export default function App() {
             }
             update();
             setInterval(update, 250);
+        })();
+
+        // ===== Inject interactive activity widgets (tap-count · drag-bucket · tap-find) =====
+        (function injectActivities(){
+            var st = document.createElement('style');
+            st.textContent = ''
+              + '@keyframes flnPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}'
+              + '@keyframes flnSparkle{0%{transform:scale(0);opacity:1}50%{transform:scale(1.3);opacity:1}100%{transform:scale(.5);opacity:0;top:-20%}}'
+              + '@keyframes flnWiggle{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}'
+              + '@keyframes flnBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}'
+              + '.fln-tap-item{transition:transform .2s,opacity .2s;animation:flnBob 2s ease-in-out infinite}'
+              + '.fln-tap-item:hover{transform:scale(1.15)!important;animation:none}'
+              + '.fln-card{transition:all .15s ease}'
+              + '.fln-card:hover{border-color:#FF9933!important;transform:translateY(-3px)}'
+              + '.fln-drag-item{transition:transform .2s,box-shadow .2s}'
+              + '.fln-drag-item:hover{transform:scale(1.1)}'
+              + '#slide-activity{display:flex;align-items:center;justify-content:center}';
+            document.head.appendChild(st);
+
+            function pill(target){
+                var p=document.createElement('div');
+                p.style.cssText='position:absolute;top:12px;right:12px;background:#FFF3E0;border:2px solid #FF9933;color:#1c1f2e;font-weight:900;font-size:1.1rem;padding:5px 14px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.08);z-index:10';
+                p.textContent='0 / '+target;
+                p.upd=function(n){p.textContent=n+' / '+target};
+                return p;
+            }
+
+            function celebrate(host, msg){
+                var ov=document.createElement('div');
+                ov.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(16,185,129,.15);backdrop-filter:blur(2px);font-size:1.5rem;font-weight:900;color:#065f46;text-align:center;padding:24px;z-index:50;animation:flnPop .4s ease-out forwards';
+                ov.textContent='🎉 '+(msg||'Great!');
+                host.appendChild(ov);
+                for(var i=0;i<10;i++){
+                    var s=document.createElement('div');
+                    s.textContent=['⭐','✨','🌟','💫'][i%4];
+                    s.style.cssText='position:absolute;font-size:2rem;pointer-events:none;left:'+(Math.random()*80+10)+'%;top:'+(Math.random()*80+10)+'%;animation:flnSparkle 1s ease-out forwards;z-index:51';
+                    host.appendChild(s);
+                }
+                // Speak success line if we have audio infra
+                if(typeof generateNarration==='undefined'){
+                    // Try the page's playAudio with current title audio as a fallback — no-op if not available
+                }
+            }
+
+            function renderTapCount(host, spec){
+                host.innerHTML='';
+                var p=pill(spec.targetCount);
+                host.appendChild(p);
+                var grid=document.createElement('div');
+                grid.style.cssText='display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;width:100%;height:100%;padding:48px 24px 24px;box-sizing:border-box';
+                var tapped=0;
+                var n=Math.max(1,Math.min(10,spec.targetCount||1));
+                for(var i=0;i<n;i++){
+                    (function(){
+                        var b=document.createElement('button');
+                        b.className='fln-tap-item';
+                        b.textContent=spec.emoji||'🟠';
+                        b.style.cssText='font-size:3.8rem;background:none;border:none;cursor:pointer;padding:6px;line-height:1;animation-delay:'+(i*0.15)+'s';
+                        b.setAttribute('aria-label','Tap to count');
+                        b.onclick=function(){
+                            if(b.dataset.t==='1')return;
+                            b.dataset.t='1';
+                            b.style.opacity='.35';
+                            b.style.transform='scale(1.4)';
+                            b.style.animation='none';
+                            setTimeout(function(){b.style.transform='scale(1)'},220);
+                            tapped++;
+                            p.upd(tapped);
+                            if(tapped===n) setTimeout(function(){celebrate(host,spec.successSay)},320);
+                        };
+                        grid.appendChild(b);
+                    })();
+                }
+                host.appendChild(grid);
+            }
+
+            function renderDragBucket(host, spec){
+                host.innerHTML='';
+                var p=pill(spec.targetCount);
+                host.appendChild(p);
+                var items=document.createElement('div');
+                items.style.cssText='position:absolute;top:54px;left:0;right:0;height:42%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;padding:8px;box-sizing:border-box';
+                host.appendChild(items);
+                var bkt=document.createElement('div');
+                bkt.style.cssText='position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:#FFF3E0;border:4px dashed #FF9933;border-radius:24px;padding:14px 24px;min-width:160px;min-height:96px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;font-size:3.5rem;line-height:1;transition:all .2s';
+                bkt.textContent=spec.bucketEmoji||'🧺';
+                var bktLabel=document.createElement('div');
+                bktLabel.style.cssText='position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font-weight:800;color:#2E3192;font-size:.85rem;text-align:center;white-space:nowrap';
+                bktLabel.textContent=spec.bucketLabel||'';
+                host.appendChild(bkt);
+                host.appendChild(bktLabel);
+                var dropped=0, contents=0;
+                var n=Math.max(1,Math.min(10,spec.targetCount||1));
+                function placeInBkt(){
+                    if(contents===0) bkt.textContent='';
+                    contents++;
+                    var s=document.createElement('span');
+                    s.textContent=spec.emoji||'🥭';
+                    s.style.cssText='font-size:2.2rem;animation:flnPop .35s ease-out';
+                    bkt.appendChild(s);
+                }
+                for(var i=0;i<n;i++){
+                    (function(){
+                        var el=document.createElement('div');
+                        el.className='fln-drag-item';
+                        el.textContent=spec.emoji||'🥭';
+                        el.style.cssText='font-size:3rem;cursor:grab;user-select:none;touch-action:none;line-height:1;padding:4px';
+                        el.dataset.d='0';
+                        var sx=0,sy=0,active=false;
+                        el.addEventListener('pointerdown',function(e){
+                            if(el.dataset.d==='1')return;
+                            el.setPointerCapture(e.pointerId);
+                            active=true;
+                            sx=e.clientX;sy=e.clientY;
+                            el.style.cursor='grabbing';
+                            el.style.zIndex='100';
+                        });
+                        el.addEventListener('pointermove',function(e){
+                            if(!active||el.dataset.d==='1')return;
+                            el.style.transform='translate('+(e.clientX-sx)+'px,'+(e.clientY-sy)+'px) scale(1.15)';
+                        });
+                        function endDrag(e){
+                            if(!active||el.dataset.d==='1')return;
+                            active=false;
+                            try{el.releasePointerCapture(e.pointerId)}catch(_){}
+                            var b=bkt.getBoundingClientRect();
+                            if(e.clientX>=b.left&&e.clientX<=b.right&&e.clientY>=b.top&&e.clientY<=b.bottom){
+                                el.dataset.d='1';
+                                el.style.display='none';
+                                dropped++;
+                                p.upd(dropped);
+                                placeInBkt();
+                                if(dropped===n) setTimeout(function(){celebrate(host,spec.successSay)},380);
+                            } else {
+                                el.style.transform='';
+                                el.style.cursor='grab';
+                                el.style.zIndex='';
+                            }
+                        }
+                        el.addEventListener('pointerup',endDrag);
+                        el.addEventListener('pointercancel',endDrag);
+                        items.appendChild(el);
+                    })();
+                }
+            }
+
+            function renderTapFind(host, spec){
+                host.innerHTML='';
+                var opts=spec.options||[];
+                var n=opts.length;
+                var cols=n<=2?2:n===3?3:2;
+                var grid=document.createElement('div');
+                grid.style.cssText='display:grid;grid-template-columns:repeat('+cols+',1fr);gap:14px;width:100%;height:100%;padding:18px;box-sizing:border-box';
+                opts.forEach(function(opt,idx){
+                    var c=document.createElement('button');
+                    c.className='fln-card';
+                    c.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#fff;border:3px solid #E8E0D0;border-radius:20px;padding:14px;cursor:pointer;font-family:inherit;min-height:100%';
+                    var em=document.createElement('div');
+                    em.textContent=opt.emoji||'';
+                    em.style.cssText='font-size:2.6rem;line-height:1.1;font-weight:900';
+                    var lb=document.createElement('div');
+                    lb.textContent=opt.label||'';
+                    lb.style.cssText='font-size:.9rem;font-weight:800;color:#1c1f2e;text-align:center';
+                    c.appendChild(em);c.appendChild(lb);
+                    c.onclick=function(){
+                        if(c.dataset.l)return;
+                        if(idx===spec.correctIndex){
+                            c.dataset.l='1';
+                            c.style.borderColor='#10b981';
+                            c.style.background='#ecfdf5';
+                            c.style.transform='scale(1.06)';
+                            setTimeout(function(){celebrate(host,spec.successSay)},250);
+                        } else {
+                            c.style.animation='flnWiggle .35s ease-in-out';
+                            setTimeout(function(){c.style.animation=''},370);
+                        }
+                    };
+                    grid.appendChild(c);
+                });
+                host.appendChild(grid);
+            }
+
+            window.flnRenderActivity=function(idx){
+                var spec=(typeof slideInteractions!=='undefined' && slideInteractions && slideInteractions[idx])||null;
+                var host=document.getElementById('slide-activity');
+                var imgWrap=document.getElementById('slide-image-wrap');
+                var instr=document.getElementById('activity-instruction');
+                if(!host)return;
+                if(!spec||!spec.kind){
+                    host.style.display='none';
+                    if(imgWrap)imgWrap.style.display='';
+                    if(instr)instr.textContent='';
+                    return;
+                }
+                if(imgWrap)imgWrap.style.display='none';
+                host.style.display='flex';
+                if(instr)instr.textContent=spec.instruction||'';
+                if(spec.kind==='tap-count')renderTapCount(host,spec);
+                else if(spec.kind==='drag-bucket')renderDragBucket(host,spec);
+                else if(spec.kind==='tap-find')renderTapFind(host,spec);
+                else { host.style.display='none'; if(imgWrap)imgWrap.style.display=''; }
+            };
+
+            // Poll for slide changes (lighter than monkey-patching updateSlide)
+            var lastIdx=-1, lastScreen='';
+            setInterval(function(){
+                if(typeof currentScreenId==='undefined')return;
+                if(currentScreenId!=='story'){
+                    if(lastScreen!==currentScreenId){
+                        lastScreen=currentScreenId;
+                        lastIdx=-1;
+                    }
+                    return;
+                }
+                if(typeof currentSlideIdx==='undefined')return;
+                if(currentSlideIdx===lastIdx&&lastScreen===currentScreenId)return;
+                lastIdx=currentSlideIdx;
+                lastScreen=currentScreenId;
+                window.flnRenderActivity(currentSlideIdx);
+            },180);
         })();
 
         // Initialize the app accurately

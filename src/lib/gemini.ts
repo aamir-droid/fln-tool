@@ -101,10 +101,57 @@ IMAGE PROMPTS (one per slide, in the same order)
 - ABSOLUTELY NO TEXT, NO LETTERS, NO NUMERALS IN THE IMAGE. Numerals belong in the slide text, never the picture.
 - The image must reinforce the slide's pedagogical role (concrete → pictorial → abstract for maths; hook → sound → sentence for literacy).
 
+SLIDE INTERACTIONS (MANDATORY — every slide must have ONE interactive widget so the child DOES, not just reads)
+
+Choose the widget type per slide based on its pedagogy role. Use only these three types:
+
+1. "tap-count" — N emoji objects on screen, child taps each one to count.
+   Pedagogy: builds 1:1 correspondence + numeral recognition.
+   Best for: counting, number-recognition, "how many" LOs.
+   Fields: kind="tap-count", instruction (in ${language}, 4–8 words),
+           emoji (single emoji like "🥭"), targetCount (integer 1–10),
+           successSay (in ${language}, 3–6 words, joyful).
+
+2. "drag-bucket" — N emoji items at top, one labeled bucket at bottom.
+   Child drags each item into the bucket.
+   Pedagogy: builds combine/group/share concept.
+   Best for: addition (drag N more into existing pile), grouping, sharing, sorting LOs.
+   Fields: kind="drag-bucket", instruction (in ${language}),
+           emoji, bucketEmoji (e.g. "🧺", "🍱", "📦"),
+           bucketLabel (in ${language}, e.g. "Kabir's basket"),
+           targetCount (integer 1–10), successSay.
+
+3. "tap-find" — 2–4 emoji options shown, child taps the correct one.
+   Pedagogy: replaces dry MCQ — used for rhyming, more/less, finding, picking.
+   Best for: comparison, recognition, rhyme/phonics match.
+   Fields: kind="tap-find", instruction (in ${language}),
+           options (array of 2–4 { emoji, label } — emoji can be a SEQUENCE like "🍪🍪🍪", label in ${language}),
+           correctIndex (which option is correct, 0-based),
+           successSay.
+
+EMOJI GUIDANCE (preferred Indian context):
+- Sweets: 🟠 (laddoo), 🟡 (jalebi), 🟤 (gulab jamun)
+- Fruits: 🥭 mango, 🍌 banana, 🍎 apple, 🍇 grapes, 🥥 coconut
+- Food: 🌶️ chili, 🍚 rice, 🫓 roti
+- Festivals/culture: 🪔 diya, 🪅 piñata-flower, 🌸 marigold, 🌺 hibiscus
+- Animals: 🐄 cow, 🐘 elephant, 🦚 peacock, 🐦 bird, 🐟 fish
+- People: 👦 boy, 👧 girl, 👵 grandmother, 👴 grandfather, 👩‍🌾 farmer
+- Objects: 📚 book, ✏️ pencil, 🪁 kite, 🎒 schoolbag, ⏰ clock, 🧺 basket
+- Money: 💰, ₹ (use ₹ as text not emoji where possible)
+- Letters/numbers: do NOT use letter/number emoji. Numerals appear only in slide text.
+
+RULES for interactions:
+- NEVER more than 10 visible items in a tap-count or drag-bucket.
+- The interaction's purpose must match the slide's pedagogy role (e.g., the CONCRETE slide in a numeracy CPA arc → tap-count; the ABSTRACT slide → tap-find with numeral choices).
+- successSay must celebrate the action, not the child ("5 mangoes in the basket!" not "Good job!").
+- Instructions never use the words "wrong", "fail", "incorrect".
+- The interaction together with the slide narration should make the child master one part of the LO outcome.
+
 Return ONLY a JSON object with these fields:
 - "title": short catchy ${language} title (4–7 words). NIPUN-aligned.
-- "storySlides": exactly ${shape.slides} ${language} strings, one per slide, in lesson order, following the pedagogy arc above.
-- "quiz": exactly ${shape.quiz} MCQs, each { "question", "options" (4), "correctIndex" }.
+- "storySlides": exactly ${shape.slides} ${language} strings, one per slide, in lesson order, following the pedagogy arc above. The text NARRATES — the interaction is what the child DOES. Keep slide text short, the interaction carries the learning.
+- "slideInteractions": exactly ${shape.slides} interaction objects, one per slide, in the same order as storySlides. Each follows the schema above.
+- "quiz": exactly ${shape.quiz} MCQs, each { "question", "options" (4), "correctIndex" }. The quiz is also presented as friendly tap-find activities, not as a test.
 - "imagePrompts": exactly ${shape.slides} English image-generation prompts, one per slide, in the same order.`;
 
   const response = await ai.models.generateContent({
@@ -139,9 +186,39 @@ Return ONLY a JSON object with these fields:
             type: Type.ARRAY,
             items: { type: Type.STRING },
             description: "Descriptive prompts for vivid illustrations. Each prompt MUST strictly correspond to the matching sentence in storySlides at the same index."
+          },
+          slideInteractions: {
+            type: Type.ARRAY,
+            description: "One interactive widget per slide, in the same order as storySlides.",
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                kind: { type: Type.STRING, description: "tap-count | drag-bucket | tap-find" },
+                instruction: { type: Type.STRING },
+                emoji: { type: Type.STRING, description: "single emoji for tap-count / drag-bucket items" },
+                targetCount: { type: Type.INTEGER, description: "1-10 for tap-count or drag-bucket" },
+                bucketEmoji: { type: Type.STRING, description: "bucket emoji for drag-bucket" },
+                bucketLabel: { type: Type.STRING, description: "bucket name for drag-bucket" },
+                options: {
+                  type: Type.ARRAY,
+                  description: "for tap-find: 2-4 choice options",
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      emoji: { type: Type.STRING },
+                      label: { type: Type.STRING }
+                    },
+                    required: ["emoji", "label"]
+                  }
+                },
+                correctIndex: { type: Type.INTEGER, description: "for tap-find: 0-based index of correct option" },
+                successSay: { type: Type.STRING }
+              },
+              required: ["kind", "instruction", "successSay"]
+            }
           }
         },
-        required: ["title", "storySlides", "quiz", "imagePrompts"]
+        required: ["title", "storySlides", "quiz", "imagePrompts", "slideInteractions"]
       }
     },
   });
