@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"C:\\\\Users\\\\Aamir\\\\Downloads\\\\NIPUN_Bharat_Curriculum_Balvatika_to_Grade3.docx\" \"C:\\\\Users\\\\Aamir\\\\Downloads\\\\HP DOWNLOAD\\\\nipun_bharat_eng1 \\(1\\).pdf\" 2>&1)",
+      "Read(//tmp/docx_extract/docx_files/**)",
+      "Bash(sed -e 's|</w:p>|\\\\n|g' -e 's|<[^>]*>||g' document.xml)",
+      "Bash(sed '/^$/d')",
+      "Read(//tmp/docx_extract/**)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "PowerShell(Get-Command npm -ErrorAction SilentlyContinue)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell($env:PATH = \"C:\\\\Program Files\\\\nodejs;$env:PATH\"; node --version; npm --version)",
+      "Bash(break)",
+      "Bash(git check-ignore *)"
+    ]
+  }
+}

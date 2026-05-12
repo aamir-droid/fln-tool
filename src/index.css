@@ -1,0 +1,190 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Sans Devanagari", serif;
+  
+  /* Primary Colors - Navy Blue */
+  --color-navy-100: #6682AD;
+  --color-navy-200: #335991;
+  --color-navy-300: #002F76;
+
+  /* Primary Colors - Yellow (Current saffron) */
+  --color-yellow-100: #FEE2A2;
+  --color-yellow-200: #FDCC5C;
+  --color-yellow-300: #FCB717;
+  --color-yellow-400: #D69C14;
+  --color-saffron: #FCB717;
+  --color-saffron-light: #FEE2A2;
+  --color-saffron-dark: #D69C14;
+
+  /* Primary Colors - Blue (Current indigo) */
+  --color-blue-100: #94FEF6;
+  --color-blue-200: #7196FF;
+  --color-blue-300: #386AF6;
+  --color-indigo: #386AF6;
+  --color-indigo-light: #EBF0FF;
+  --color-indigo-dark: #002F76; /* NavyBlue-300 as dark indigo */
+
+  /* Secondary Color */
+  --color-pink-300: #ED23F1;
+  --color-secondary: #ED23F1;
+
+  /* Success */
+  --color-green-50: #CCF8D8; /* Using Green-100 for 50 */
+  --color-green-100: #CCF8D8;
+  --color-green-200: #66EB8B;
+  --color-green-300: #00DD3E;
+  --color-green-400: #00B132;
+  --color-green-500: #00B132; /* Alias for standard tailwind class */
+
+  /* Error */
+  --color-red-50: #FED7DA; /* Using Red-100 for 50 */
+  --color-red-100: #FED7DA;
+  --color-red-200: #FB868F;
+  --color-red-300: #F93544;
+  --color-red-400: #C72A36;
+  --color-red-500: #C72A36; /* Alias for standard tailwind class */
+
+  /* Neutral */
+  --color-grey-100: #FFFFFF;
+  --color-grey-200: #EAEAEA;
+  --color-grey-300: #DADADA;
+  --color-grey-400: #999999;
+  --color-grey-500: #4F4F4F;
+  --color-gray-100: #FFFFFF;
+  --color-gray-200: #EAEAEA;
+  --color-gray-300: #DADADA;
+  --color-gray-400: #999999;
+  --color-gray-500: #4F4F4F;
+
+  --color-app-bg: #F8F9FD;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
+body {
+  background-color: var(--color-app-bg);
+  color: #1A1A2E;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+
+button {
+  cursor: pointer;
+}
+
+.vertical-rl {
+  writing-mode: vertical-rl;
+}
+
+.hindi-shadow {
+  box-shadow: 0 4px 20px rgba(255,107,0,0.10);
+}
+
+.hindi-shadow-hover {
+  box-shadow: 0 8px 32px rgba(255,107,0,0.18);
+}
+
+@media print {
+  header, 
+  section:first-of-type, 
+  .no-print,
+  button:not(.quiz-option),
+  .fixed {
+    display: none !important;
+  }
+
+  .quiz-option {
+    display: block !important;
+    background-color: white !important;
+    color: #1A1A2E !important;
+    border: 1px solid #E8E0D0 !important;
+    margin-bottom: 8px !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    pointer-events: none !important;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .quiz-option .bg-white\/10 {
+    background-color: #F8F9FD !important;
+    border: 1px solid #E8E0D0 !important;
+    color: #1A1A2E !important;
+    -webkit-print-color-adjust: exact;
+  }
+
+  main {
+    padding-top: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .hindi-shadow {
+    box-shadow: none !important;
+    border: 1px solid #E8E0D0 !important;
+  }
+
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  body {
+    background-color: white !important;
+  }
+
+  .bg-indigo {
+    background-color: white !important;
+    color: #1A1A2E !important;
+    border: 1px solid #E8E0D0 !important;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .bg-indigo .Trophy, .bg-indigo svg {
+    display: none !important;
+  }
+
+  .bg-white\/5, .bg-white {
+    background-color: white !important;
+    border: 1px solid #E8E0D0 !important;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .bg-saffron-light {
+    background-color: #FFF0E0 !important;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .bg-indigo-light {
+    background-color: #E8EAF6 !important;
+    -webkit-print-color-adjust: exact;
+  }
+
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .text-saffron {
+    color: #E65100 !important;
+  }
+
+  .text-indigo {
+    color: #1A1A2E !important;
+  }
+
+  .text-white\/60, .text-white\/80, .text-white {
+    color: #1A1A2E !important;
+  }
+}
