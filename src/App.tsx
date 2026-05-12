@@ -89,6 +89,42 @@ const LAKSHYAS: any = {
   }
 };
 
+// Pedagogical strategies — content adapts to grade + domain.
+// Source: NIPUN Bharat / NEP 2020 / NCF-FS 2022 pedagogy guidelines.
+const PEDAGOGY: any = {
+  literacy: {
+    label: { English: "Foundational Literacy Approach", Hindi: "साक्षरता शिक्षण का दृष्टिकोण" },
+    strategies: [
+      { icon: "📖", title: { English: "Reading & Comprehension", Hindi: "पठन और समझ" }, desc: { English: "Decoding text, retelling stories, answering questions about what's read.", Hindi: "पाठ पढ़ना, कहानी फिर से सुनाना, और सरल प्रश्नों के उत्तर देना।" } },
+        { icon: "✍️", title: { English: "Writing for Expression", Hindi: "अभिव्यक्ति के लिए लेखन" }, desc: { English: "Children write names, labels, sentences and short stories. Invented spelling is welcomed.", Hindi: "बच्चे नाम, चिन्ह, वाक्य और छोटी कहानियाँ लिखते हैं। अनुमानित वर्तनी स्वीकार्य है।" } },
+        { icon: "🔤", title: { English: "Phonics & Vocabulary", Hindi: "ध्वनि-ज्ञान और शब्द भंडार" }, desc: { English: "Sound–letter links, rhymes, and word families build the decoding ladder.", Hindi: "ध्वनि-अक्षर संबंध, तुकबंदी और शब्द-परिवार पढ़ने की सीढ़ी बनाते हैं।" } },
+        { icon: "🧠", title: { English: "Critical Thinking", Hindi: "तार्किक सोच" }, desc: { English: "Why-questions, predictions, and opinions — children link stories to their own lives.", Hindi: "क्यों-प्रश्न, अनुमान और राय — बच्चे कहानियों को अपने जीवन से जोड़ते हैं।" } }
+    ]
+  },
+  numeracy: {
+    label: { English: "Foundational Numeracy Approach", Hindi: "संख्या-ज्ञान शिक्षण का दृष्टिकोण" },
+    strategies: [
+      { icon: "🔢", title: { English: "Number Sense", Hindi: "संख्या बोध" }, desc: { English: "Counting, comparing, sequencing — building an intuitive feel for how numbers behave.", Hindi: "गिनना, तुलना और क्रम — संख्याओं के व्यवहार की अंतर्ज्ञानात्मक समझ।" } },
+      { icon: "➕", title: { English: "Basic Operations", Hindi: "मूल संक्रियाएँ" }, desc: { English: "Addition, subtraction (and later × ÷) grounded in objects and daily-life stories.", Hindi: "जोड़, घटाव (और बाद में गुणा-भाग) — वस्तुओं और रोज़मर्रा की कहानियों पर आधारित।" } },
+      { icon: "📐", title: { English: "Spatial & Shape Understanding", Hindi: "आकार और स्थान बोध" }, desc: { English: "2D/3D shapes, position words, measurement using hand-spans, cups and rulers.", Hindi: "2D/3D आकार, स्थान-शब्द, हाथ-नाप / कप / रूलर से मापन।" } },
+      { icon: "🧩", title: { English: "Problem-Solving in Context", Hindi: "संदर्भ में समस्या-समाधान" }, desc: { English: "Word problems set in shops, kitchens, festivals — maths becomes useful, not abstract.", Hindi: "दुकान, रसोई और त्योहारों पर आधारित शब्द-प्रश्न — गणित अमूर्त नहीं, उपयोगी बनती है।" } }
+    ]
+  },
+  // Strategies that apply to BOTH domains
+  universal: [
+    { icon: "🎲", title: { English: "Play-way & Experiential", Hindi: "खेल-खेल में सीखना" }, desc: { English: "Learning kits, songs, role-play and digital resources (DIKSHA, e-pathshala) make learning joyful.", Hindi: "लर्निंग किट, गीत, अभिनय और डिजिटल संसाधन (दीक्षा, ई-पाठशाला) सीखने को आनंदमय बनाते हैं।" } },
+    { icon: "👥", title: { English: "Peer & Small-group", Hindi: "साथी और छोटे समूह" }, desc: { English: "One-to-one buddy work and 3–5 child groups — children explain to each other in their own words.", Hindi: "एक-से-एक और 3–5 बच्चों के समूह — बच्चे अपने शब्दों में एक-दूसरे को समझाते हैं।" } },
+    { icon: "📊", title: { English: "Adaptive Assessment", Hindi: "अनुकूली मूल्यांकन" }, desc: { English: "Observation, oral checks, portfolio tasks — no exams. Teachers adjust to each child's pace.", Hindi: "अवलोकन, मौखिक जाँच और पोर्टफोलियो — परीक्षा नहीं। शिक्षक हर बच्चे की गति के अनुसार बदलते हैं।" } }
+  ],
+  // Grade-specific emphasis ribbon (one short line)
+  gradeEmphasis: {
+    "Balvatika": { English: "Play-heavy · oral language · senses & shapes · no formal writing", Hindi: "खेल-केंद्रित · मौखिक भाषा · इंद्रियाँ और आकार · औपचारिक लेखन नहीं" },
+    "Grade 1":   { English: "Phonics + invented spelling · counting to 99 · concrete objects", Hindi: "ध्वनि-ज्ञान + अनुमानित वर्तनी · 99 तक गिनती · वस्तुओं द्वारा सीखना" },
+    "Grade 2":   { English: "45–60 wpm fluency · place value · own-method addition / subtraction", Hindi: "45–60 शब्द प्रति मिनट · स्थानीय मान · स्वयं की विधि से जोड़-घटाव" },
+    "Grade 3":   { English: "Comprehension > 60 wpm · 3-digit operations · adaptive checks", Hindi: "60+ शब्द प्रति मिनट समझ · 3-अंक संक्रियाएँ · अनुकूली जाँच" }
+  }
+};
+
 interface QuizQuestion {
   question: string;
   options: string[];
@@ -104,6 +140,13 @@ interface LessonResult {
   imagePrompts: string[];
   storyAudioBase64?: string[];
   storyImagesBase64?: string[];
+  // NIPUN anchoring — surfaced as a badge on the lesson screens
+  loCode?: string;
+  loSubSkill?: string;
+  loOutcome?: string;
+  loActivity?: string;
+  loGrade?: string;
+  loDomain?: "literacy" | "numeracy";
   theme?: {
     fontFamily: string;
     textColor: string;
@@ -122,6 +165,7 @@ export default function App() {
   const [topicListOpen, setTopicListOpen] = useState<boolean>(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>(["phonics", "reading"]);
   const [showLakshyas, setShowLakshyas] = useState(true);
+  const [showPedagogy, setShowPedagogy] = useState(true);
   const [introAudioPlayed, setIntroAudioPlayed] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSlideUpdating, setIsSlideUpdating] = useState<number | null>(null);
@@ -262,8 +306,14 @@ export default function App() {
     setCurrentStorySlide(0);
 
     try {
+      // Resolve the NIPUN LO context (if user picked one) so Gemini can anchor the lesson to it
+      let loContext: any = undefined;
+      if (nipunCode && topicMode === "nipun") {
+        const lo = getTopicsForGradeDomain(grade, domain).find(t => t.code === nipunCode);
+        if (lo) loContext = { code: lo.code, subSkill: lo.subSkill, outcome: lo.outcome, activity: lo.activity };
+      }
       // res usually contains { title, storySlides, quiz, imagePrompts }
-      const res = await generateLesson(grade, topic, selectedSkills, language, domain);
+      const res = await generateLesson(grade, topic, selectedSkills, language, domain, loContext);
       
       setGenerationStep(language === "Hindi" ? "सुंदर चित्र बनाए जा रहे हैं..." : "Creating beautiful illustrations...");
       // Generate images in parallel
@@ -280,12 +330,18 @@ export default function App() {
         const storyAudios = new Array(res.storySlides.length).fill("");
         if (firstSlideAudio) storyAudios[0] = firstSlideAudio;
 
-        const finalResult = { 
-          ...res, 
+        const finalResult = {
+          ...res,
           quiz: res.quiz.map((q: any) => ({ ...q, audioBase64: "" })),
           titleAudioBase64: titleAudio || "",
           storyAudioBase64: storyAudios,
           storyImagesBase64: validStoryImages,
+          loCode: loContext?.code,
+          loSubSkill: loContext?.subSkill,
+          loOutcome: loContext?.outcome,
+          loActivity: loContext?.activity,
+          loGrade: grade,
+          loDomain: domain,
           theme: {
             fontFamily: "'Poppins', sans-serif",
             textColor: "#386AF6",
@@ -303,12 +359,18 @@ export default function App() {
       } catch (audioErr: any) {
         console.error("Audio generation error:", audioErr);
         const validStoryImages = storyImages.map(img => img || "");
-        const finalResult = { 
-          ...res, 
+        const finalResult = {
+          ...res,
           quiz: res.quiz.map((q: any) => ({ ...q, audioBase64: "" })),
           titleAudioBase64: "",
           storyAudioBase64: new Array(res.storySlides.length).fill(""),
           storyImagesBase64: validStoryImages,
+          loCode: loContext?.code,
+          loSubSkill: loContext?.subSkill,
+          loOutcome: loContext?.outcome,
+          loActivity: loContext?.activity,
+          loGrade: grade,
+          loDomain: domain,
           theme: {
             fontFamily: "'Poppins', sans-serif",
             textColor: "#386AF6",
@@ -761,6 +823,7 @@ export default function App() {
     <div class="aspect-16-9">
         <div id="screen-intro" class="screen active">
             <div class="flex-1 flex flex-col items-center justify-center text-center px-12 pt-10 pb-12 space-y-6 bg-gradient-to-br from-[#386AF6] via-[#ED23F1] to-[#ED23F1] text-white">
+                ${result.loCode ? `<div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur border border-white/30 rounded-full px-3 py-1 mx-auto" style="backdrop-filter:blur(8px)"><span style="font-weight:900;font-size:11px;letter-spacing:.1em;color:#fff">${result.loCode}</span><span style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.6)"></span><span style="font-weight:700;font-size:11px;color:rgba(255,255,255,.9)">${result.loGrade || ''}</span>${result.loSubSkill ? `<span style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.6)"></span><span style="font-weight:700;font-size:11px;color:rgba(255,255,255,.9)">${result.loSubSkill}</span>` : ''}</div>` : ''}
                 <h1 class="text-4xl md:text-5xl font-extrabold max-w-4xl drop-shadow-xl leading-tight break-words">${result.title}</h1>
                 <p class="text-lg md:text-xl text-white/90 max-w-2xl font-medium">
                     ${language === "Hindi" ? "आज हम इस विषय के बारे में सीखेंगे।" : "Today we will learn about this topic."}
@@ -1201,6 +1264,7 @@ export default function App() {
     <div class="aspect-16-9">
         <div id="screen-intro" class="screen active">
             <div class="flex-1 flex flex-col items-center justify-center text-center px-12 pt-10 pb-12 space-y-6 bg-gradient-to-br from-[#386AF6] via-[#ED23F1] to-[#ED23F1] text-white">
+                ${result.loCode ? `<div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur border border-white/30 rounded-full px-3 py-1 mx-auto" style="backdrop-filter:blur(8px)"><span style="font-weight:900;font-size:11px;letter-spacing:.1em;color:#fff">${result.loCode}</span><span style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.6)"></span><span style="font-weight:700;font-size:11px;color:rgba(255,255,255,.9)">${result.loGrade || ''}</span>${result.loSubSkill ? `<span style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.6)"></span><span style="font-weight:700;font-size:11px;color:rgba(255,255,255,.9)">${result.loSubSkill}</span>` : ''}</div>` : ''}
                 <h1 class="text-4xl md:text-5xl font-extrabold max-w-4xl drop-shadow-xl leading-tight break-words">${result.title}</h1>
                 <p class="text-lg md:text-xl text-white/90 max-w-2xl font-medium">
                     ${language === "Hindi" ? "आज हम इस विषय के बारे में सीखेंगे।" : "Today we will learn about this topic."}
@@ -2065,6 +2129,96 @@ export default function App() {
                   </div>
                 )}
 
+                {/* Pedagogical Approach — content adapts to grade + domain */}
+                <div className="pt-4 border-t-2 border-[#F0F2F5]">
+                  <button
+                    onClick={() => setShowPedagogy(!showPedagogy)}
+                    className="w-full flex items-center justify-between p-4 bg-saffron-light/40 rounded-2xl border-2 border-saffron/30 hover:bg-saffron-light/60 transition-all text-saffron"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Lightbulb className="w-5 h-5 fill-current" />
+                      <div className="text-left">
+                        <h3 className="text-lg font-black leading-tight">
+                          {PEDAGOGY[domain].label[language]}
+                        </h3>
+                        <p className="text-[11px] font-bold text-saffron/80 mt-0.5">
+                          {grade} · {PEDAGOGY.gradeEmphasis[grade]?.[language]}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronDown className={`w-5 h-5 transition-transform shrink-0 ${showPedagogy ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showPedagogy && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="p-6 space-y-5 bg-white">
+                          {/* Domain-specific (4 strategies) */}
+                          <div>
+                            <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-saffron/70 pb-1.5 border-b border-saffron/20 mb-3">
+                              {domain === "literacy"
+                                ? (language === "Hindi" ? "साक्षरता रणनीतियाँ" : "Literacy strategies")
+                                : (language === "Hindi" ? "संख्या-ज्ञान रणनीतियाँ" : "Numeracy strategies")}
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {PEDAGOGY[domain].strategies.map((s: any, i: number) => (
+                                <div key={i} className="flex gap-3 p-3 bg-saffron-light/20 rounded-xl border border-saffron/15">
+                                  <div className="text-2xl shrink-0">{s.icon}</div>
+                                  <div>
+                                    <div className="font-black text-navy-300 text-sm leading-tight">{s.title[language]}</div>
+                                    <div className="text-[11px] text-navy-300/75 font-medium leading-snug mt-0.5">{s.desc[language]}</div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Universal strategies (3) */}
+                          <div>
+                            <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo/70 pb-1.5 border-b border-indigo/20 mb-3">
+                              {language === "Hindi" ? "सामान्य FLN दृष्टिकोण" : "Cross-cutting FLN approach"}
+                            </h4>
+                            <div className="space-y-2">
+                              {PEDAGOGY.universal.map((s: any, i: number) => (
+                                <div key={i} className="flex gap-3 p-3 bg-indigo-light/30 rounded-xl border border-indigo/15">
+                                  <div className="text-xl shrink-0">{s.icon}</div>
+                                  <div>
+                                    <div className="font-black text-navy-300 text-sm leading-tight">{s.title[language]}</div>
+                                    <div className="text-[11px] text-navy-300/75 font-medium leading-snug mt-0.5">{s.desc[language]}</div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* If a NIPUN topic is selected, surface its example activity */}
+                          {nipunCode && topicMode === "nipun" && (() => {
+                            const all = getTopicsForGradeDomain(grade, domain);
+                            const lo = all.find(t => t.code === nipunCode);
+                            if (!lo) return null;
+                            return (
+                              <div className="p-3 bg-green-50 rounded-xl border border-green-200">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-[10px] font-black bg-green-200 text-green-900 px-2 py-0.5 rounded">{lo.code}</span>
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.15em] text-green-800">
+                                    {language === "Hindi" ? "इस LO के लिए सुझाव" : "Suggested activity for this LO"}
+                                  </h4>
+                                </div>
+                                <div className="text-[12px] text-green-900 font-medium leading-snug">{lo.activity}</div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 {/* Generate Button Area */}
                 <div className="pt-4">
                   <button
@@ -2242,6 +2396,16 @@ export default function App() {
                               className="w-24 h-24 md:w-32 md:h-32 mx-auto cursor-pointer select-none drop-shadow-[0_12px_30px_rgba(0,0,0,0.35)]"
                               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                             />
+
+                            {/* NIPUN anchor badge — what this lesson is teaching */}
+                            {result.loCode && (
+                              <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur border border-white/30 rounded-full px-3 py-1 mx-auto">
+                                <span className="font-black text-[11px] tracking-wider text-white">{result.loCode}</span>
+                                <span className="w-1 h-1 rounded-full bg-white/60" />
+                                <span className="font-bold text-[11px] text-white/90">{result.loGrade}</span>
+                                {result.loSubSkill && <><span className="w-1 h-1 rounded-full bg-white/60" /><span className="font-bold text-[11px] text-white/90">{result.loSubSkill}</span></>}
+                              </div>
+                            )}
 
                             <h1
                               contentEditable
@@ -2657,10 +2821,34 @@ export default function App() {
                                         })}
                                       </div>
 
-                                      <div className="bg-[#1E2E6E] rounded-[24px] px-10 py-6 mb-10 inline-block shadow-inner min-w-[240px]">
+                                      <div className="bg-[#1E2E6E] rounded-[24px] px-10 py-6 mb-6 inline-block shadow-inner min-w-[240px]">
                                         <div className="text-5xl font-black mb-1">{Math.round((quizScore / (result?.quiz.length || 1)) * 100)}%</div>
                                         <div className="text-lg font-bold opacity-70 uppercase tracking-[0.2em]">{language === "Hindi" ? "सटीकता" : "ACCURACY"}</div>
                                       </div>
+
+                                      {/* NIPUN mastery ribbon — only when LO is known and ≥75% accuracy */}
+                                      {result?.loCode && (() => {
+                                        const acc = Math.round((quizScore / (result?.quiz.length || 1)) * 100);
+                                        const mastered = acc >= 75;
+                                        return (
+                                          <div className={`mx-auto mb-8 max-w-md rounded-2xl px-5 py-3 text-left ${mastered ? 'bg-green-500/20 border-2 border-green-400/60' : 'bg-amber-500/15 border-2 border-amber-400/50'}`}>
+                                            <div className="flex items-center gap-2 mb-1">
+                                              <span className={`font-black text-[11px] tracking-wider px-2 py-0.5 rounded ${mastered ? 'bg-green-400 text-green-950' : 'bg-amber-300 text-amber-950'}`}>{result.loCode}</span>
+                                              <span className="font-black text-sm">
+                                                {mastered
+                                                  ? (language === "Hindi" ? "महारत हासिल!" : "Mastered!")
+                                                  : (language === "Hindi" ? "लगभग!" : "Almost!")}
+                                              </span>
+                                            </div>
+                                            <div className="text-[12px] font-medium opacity-90 leading-snug">
+                                              {result.loOutcome}
+                                            </div>
+                                            <div className="text-[11px] opacity-70 mt-1">
+                                              {result.loGrade} · {result.loSubSkill}
+                                            </div>
+                                          </div>
+                                        );
+                                      })()}
 
                                       <button 
                                         onClick={() => {

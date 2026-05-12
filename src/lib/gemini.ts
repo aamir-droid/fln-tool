@@ -3,48 +3,109 @@ import { GoogleGenAI, Modality, Type } from "@google/genai";
 const apiKey = process.env.GEMINI_API_KEY!;
 const ai = new GoogleGenAI({ apiKey });
 
-export async function generateLesson(grade: string, topic: string, skills: string[], language: "Hindi" | "English" = "Hindi", domain: "literacy" | "numeracy" = "literacy") {
+export type LOContext = {
+  code: string;        // e.g. "ILM 4.9"
+  subSkill: string;    // e.g. "Number Sense"
+  outcome: string;     // full LO statement from NIPUN
+  activity: string;    // example activity from NIPUN
+};
+
+// Grade-tuned complexity knobs — slides, quiz length, sentence budget
+function lessonShape(grade: string) {
+  switch (grade) {
+    case "Balvatika": return { slides: 3, quiz: 3, sentenceWords: "4–6", style: "picture-driven with single-clause sentences" };
+    case "Grade 1":   return { slides: 4, quiz: 4, sentenceWords: "5–8", style: "subject-verb-object, one idea per sentence" };
+    case "Grade 2":   return { slides: 4, quiz: 4, sentenceWords: "7–12", style: "two-clause sentences allowed, conversational" };
+    case "Grade 3":   return { slides: 5, quiz: 5, sentenceWords: "10–15", style: "multi-clause sentences, richer vocabulary" };
+    default:          return { slides: 4, quiz: 4, sentenceWords: "7–12", style: "conversational" };
+  }
+}
+
+function pedagogyBlock(domain: "literacy" | "numeracy"): string {
+  if (domain === "numeracy") {
+    return `NUMERACY PEDAGOGY (mandatory — every slide must follow this arc):
+- Slide 1 — CONCRETE: introduce the maths idea using a real Indian daily-life scene (a shopkeeper, a kitchen, a festival). NO numerals yet — words and objects only ("three laddoos on a plate").
+- Slide 2 — PICTORIAL: represent the same idea with a clean visual (dots, blocks, ten-frames, beads) and ONE numeral. Bridge concrete → abstract.
+- Slide 3 (and later, if more slides) — ABSTRACT + APPLY: use the numeral / symbol / equation form. Final slide is a "Now you try!" prompt mirroring the NIPUN suggested activity below.
+- Always anchor in Indian context: ₹ for money, roti / laddoo / mango / marbles for counting, festival lamps for sets, hand-spans for length.
+- Problem-solving frame: "Riya / Kabir / Meera has X, now Y happens, what next?"`;
+  }
+  return `LITERACY PEDAGOGY (mandatory — every slide builds the phonics + comprehension ladder):
+- Slide 1 — HOOK: a tiny scene a child can picture (a market, a grandmother's story, a rainy day). Introduce ONE key word.
+- Slide 2 — SOUND / LETTER LINK: the key word's first sound, its letter, and 2 rhyming or matra-family neighbours. Wrap the key word in <span class="text-saffron font-bold">…</span>.
+- Slide 3 — SENTENCE / STORY: the key word used in a full short sentence + a why-question for the child.
+- Slide 4 (if used) — RETELL / WRITE: invite the child to retell or write something using the key word. Mirror the NIPUN suggested activity below.
+- Daily-life anchoring: family, school, weather, food, festivals.`;
+}
+
+export async function generateLesson(
+  grade: string,
+  topic: string,
+  skills: string[],
+  language: "Hindi" | "English" = "Hindi",
+  domain: "literacy" | "numeracy" = "literacy",
+  lo?: LOContext
+) {
   const model = "gemini-3.1-pro-preview";
-  
-  const prompt = `You are an expert educator for children in India, strictly following NCERT, NEP (National Education Policy) 2020, and FLN (Foundational Literacy and Numeracy) guidelines.
-  Create a fun, engaging, and age-appropriate ${language} lesson.
-  
-  DOMAIN OVERVIEW: 
-  You are creating a ${domain} lesson. 
-  - If domain is literacy: Focus on phonics, reading, vocabulary, and relevant short stories.
-  - If domain is numeracy: Focus on number sense, patterns, basic math operations, and logical reasoning using clear instructional steps.
-  
-  CORE PEDAGOGY:
-  - FLN Focus: Focus on basic decoding, vocabulary building, and reading comprehension.
-  - NEP 2020: Use experiential learning, relational teaching, and relatable daily-life examples.
-  - NCERT: Align with the curriculum standards for the specified grade.
-  - Indian Context: Use Indian names (e.g., Kabir, Meera), local festivals (Diwali, Holi, Pongal), Indian food, and familiar landmarks.
-  - Spelling: ${language === "English" ? "Use British English (UK) spelling (e.g., 'colour', 'centre') as per Indian school standards." : "Use clear, standard Devanagari script."}
-  
-  Grade: ${grade}
-  Topic: ${topic}
-  Skills Focus: ${skills.join(", ")}
-  
-  CONTENT/LESSON STRUCTURE:
-  - Format: Align the content structure with the topic. It does NOT have to be a story.
-  - For Numeracy: Use objects for counting, step-by-step problem solving, and clear mathematical concepts. Use simple, direct instructional language.
-  - For Literacy: Use sentences that build vocabulary or short narratives if a story fits the topic.
-  - For Grades 1-2: Keep sentences extremely short (max 7-10 words). Use simple subject-verb-object structures.
-  - For Grades 3-5: Introduce slightly more complex vocabulary but keep it conversational.
-  - Comprehensiveness: Ensure the topic is introduced, explained with examples, and summarized.
-  
-  Return the response in JSON format with the following fields:
-  "title": A catchy, simple ${language} title (FLN-aligned).
-  "storySlides": An array of simple ${language} sentences (representing the lesson content slides). 
-    - HIGHLIGHTING: Wrap important key vocabulary words in <span class="text-saffron font-bold">word</span> tags.
-  "quiz": An array of 3-5 multiple-choice questions testing foundational understanding.
-    "question": Simple question in ${language}.
-    "options": 4 clear choices.
-    "correctIndex": The correct index.
-  "imagePrompts": descriptive prompts for vivid illustrations. 
-    - SPECIAL INSTRUCTION FOR MATH/NUMERACY: Describe the mathematical items (like 5 apples, shapes, etc.) on a **CLEAR WHITE BACKGROUND** with **NO EXTRA ELEMENTS, NO DECORATIONS, AND NO COMPLEX BACKGROUNDS**. This is to avoid confusing the child.
-    - LITERACY: Use descriptive, contextual backgrounds.
-    - NO TEXT, NO LETTERS.`;
+  const shape = lessonShape(grade);
+
+  const loBlock = lo ? `
+NIPUN BHARAT LEARNING OUTCOME (the lesson MUST anchor to this — do NOT drift off-topic):
+- LO Code: ${lo.code}
+- Sub-skill: ${lo.subSkill}
+- What the child should be able to do: "${lo.outcome}"
+- NIPUN's suggested activity (use this as direct inspiration for the FINAL story slide and at least one quiz question):
+    ${lo.activity}
+- Success criterion: the quiz questions, taken together, should let a teacher tell whether the child has met the outcome above. Map each quiz question back to one part of the outcome.
+` : `
+NO SPECIFIC NIPUN LO PROVIDED — treat "${topic}" as the anchor and align it with the closest plausible NIPUN target for ${grade} ${domain}.
+`;
+
+  const prompt = `You are a senior FLN curriculum designer for India with 20+ years of classroom experience.
+You strictly follow NIPUN Bharat (2021), NEP 2020, NCF-FS 2022, and NCERT standards for ages 5–9.
+
+LESSON SPECS
+- Grade: ${grade}
+- Domain: ${domain}
+- Topic: ${topic}
+- Output language: ${language}
+- Spelling: ${language === "English" ? "British English (UK) — colour, centre, organise — per Indian school standards." : "Standard Devanagari script. Avoid English transliteration unless absolutely needed."}
+- Slides to produce: ${shape.slides}
+- Quiz questions to produce: ${shape.quiz}
+- Sentence budget per slide: ${shape.sentenceWords} words. ${shape.style}.
+${skills?.length ? `- Skills emphasis (light touch — do not let it override the LO): ${skills.join(", ")}` : ""}
+
+${loBlock}
+${pedagogyBlock(domain)}
+
+CROSS-CUTTING FLN APPROACH (mandatory):
+- Play-way / experiential — the lesson must feel like a game or a small adventure, not a textbook.
+- Daily-life anchoring — Indian names (Kabir, Meera, Riya, Anu, Arjun, Sita, Lakshmi, Ravi), Indian objects (roti, laddoo, mango, marigold, kite, brass bell, festival diyas), ₹ for money, festivals (Diwali, Holi, Pongal, Onam, Eid).
+- Mother-tongue first — write naturally in ${language}, not translated-English.
+- Invisible assessment — quiz questions should feel like a friendly chat, not an exam.
+- No fear-based language — never "wrong", "bad", "fail". Use "let's try again", "almost", "great try".
+
+HIGHLIGHTING
+- Wrap the SINGLE most important vocabulary word per slide in <span class="text-saffron font-bold">word</span>.
+- Use this sparingly — at most ONE highlighted word per slide.
+
+QUIZ DESIGN
+- 4 options per question, ONE correct.
+- Distractors must be plausible (same category — if asking about a number, distractors are nearby numbers; if asking about a story character, distractors are other named characters from the story).
+- Vary the question stems: not every question is "How many…?" or "Who…?".
+- For ${grade}, the question itself should be ${shape.sentenceWords} words.
+
+IMAGE PROMPTS (one per slide, in the same order)
+- For Numeracy slides: PURE WHITE BACKGROUND, no decorations, no text, no shadows, no patterns. Objects arranged in a 16:9 frame with 10% safe margin on every side. If many objects, wrap into 2–3 neat rows.
+- For Literacy slides: warm, contextual background that matches the scene (kitchen, classroom, market, garden). Indian children, Indian clothing where people are shown.
+- ABSOLUTELY NO TEXT, NO LETTERS, NO NUMERALS IN THE IMAGE. Numerals belong in the slide text, never the picture.
+- The image must reinforce the slide's pedagogical role (concrete → pictorial → abstract for maths; hook → sound → sentence for literacy).
+
+Return ONLY a JSON object with these fields:
+- "title": short catchy ${language} title (4–7 words). NIPUN-aligned.
+- "storySlides": exactly ${shape.slides} ${language} strings, one per slide, in lesson order, following the pedagogy arc above.
+- "quiz": exactly ${shape.quiz} MCQs, each { "question", "options" (4), "correctIndex" }.
+- "imagePrompts": exactly ${shape.slides} English image-generation prompts, one per slide, in the same order.`;
 
   const response = await ai.models.generateContent({
     model,
